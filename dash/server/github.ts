@@ -113,5 +113,6 @@ export async function summarizePullRequest(repo: string, number: number, since: 
     newComments:
       pr.comments.filter((comment) => after(comment.createdAt) && isPerson(comment.author?.login, mine)).length +
       pr.reviews.filter((review) => after(review.submittedAt) && isPerson(review.author?.login, mine)).length,
+    reviewedByMe: pr.reviews.some((review) => review.author?.login === mine && review.submittedAt),
   };
 }

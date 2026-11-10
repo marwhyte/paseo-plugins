@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classify, type PullRequestSummary } from "../shared/model";
+import { classify, reReviewPrompt, type PullRequestSummary } from "../shared/model";
 
 const pr = (overrides: Partial<PullRequestSummary> = {}): PullRequestSummary => ({
   number: 8007,
@@ -11,6 +11,7 @@ const pr = (overrides: Partial<PullRequestSummary> = {}): PullRequestSummary => 
   reviewDecision: null,
   newCommits: 0,
   newComments: 0,
+  reviewedByMe: true,
   ...overrides,
 });
 
@@ -65,5 +66,22 @@ describe("classify", () => {
   it("files a finished chat without a PR under Unread until seen, then Done", () => {
     expect(classify("attention", null)).toEqual({ group: "unread", detail: "finished" });
     expect(classify("done", null)).toEqual({ group: "done", detail: "finished" });
+  });
+});
+
+describe("reReviewPrompt", () => {
+  it("asks whether earlier points were addressed once you've reviewed", () => {
+    expect(reReviewPrompt(pr({ newCommits: 2 }))).toContain("whether your earlier points were addressed");
+  });
+
+  it("asks for a first review when the chat looked but never reviewed", () => {
+    const prompt = reReviewPrompt(pr({ newComments: 1, reviewedByMe: false }));
+    expect(prompt).toContain("/pr-review 8007");
+    expect(prompt).not.toContain("earlier points");
+  });
+
+  it("asks to triage feedback on your own PR", () => {
+    const prompt = reReviewPrompt(pr({ mine: true, reviewedByMe: false, newComments: 3 }));
+    expect(prompt).toBe("PR #8007 has 3 new comments since you last looked. Go through the new feedback and tell me which points need changes.");
   });
 });

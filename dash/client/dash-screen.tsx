@@ -11,10 +11,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { GROUP_LABELS, type DashRow, type Group } from "../shared/model";
+import { GROUP_LABELS, reReviewPrompt, type DashRow, type Group } from "../shared/model";
 import {
   dashKeys,
-  reReviewPrompt,
   relativeTime,
   useDashSnapshot,
   type DashGroupRows,
@@ -182,7 +181,7 @@ function Row({
   const reReview = async () => {
     if (!row.agentId) return;
     try {
-      await paseo.agents.ref(row.agentId).send(reReviewPrompt(row));
+      await paseo.agents.ref(row.agentId).send(reReviewPrompt(row.pullRequest));
       void queryClient.invalidateQueries({ queryKey: dashKeys.snapshot });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));

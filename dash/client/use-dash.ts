@@ -41,13 +41,3 @@ export function relativeTime(iso: string | null, now = Date.now()): string {
   if (hours < 24) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
 }
-
-export function reReviewPrompt(row: DashRow): string {
-  const pr = row.pullRequest;
-  const what = pr
-    ? [pr.newCommits && `${pr.newCommits} new commit${pr.newCommits === 1 ? "" : "s"}`, pr.newComments && `${pr.newComments} new comment${pr.newComments === 1 ? "" : "s"}`]
-        .filter(Boolean)
-        .join(" and ")
-    : "new activity";
-  return `PR #${pr?.number ?? ""} has ${what} since you last looked. Review just what changed since then, and tell me whether your earlier points were addressed.`;
-}

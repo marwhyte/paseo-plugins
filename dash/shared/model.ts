@@ -22,6 +22,8 @@ export const pullRequestSummary = z.object({
   reviewDecision: z.enum(["APPROVED", "CHANGES_REQUESTED", "REVIEW_REQUIRED"]).nullable(),
   newCommits: z.number(),
   newComments: z.number(),
+  /** Whether you've submitted a review; a chat that only talked about the PR hasn't. */
+  reviewedByMe: z.boolean(),
 });
 export type PullRequestSummary = z.infer<typeof pullRequestSummary>;
 
@@ -50,6 +52,22 @@ export function changesSinceLook(pullRequest: PullRequestSummary): string | null
     pullRequest.newComments && plural(pullRequest.newComments, "comment"),
   ].filter(Boolean);
   return parts.length ? `${parts.join(", ")} since you looked` : null;
+}
+
+export function reReviewPrompt(pullRequest: PullRequestSummary | null): string {
+  if (!pullRequest) return "There's new activity since you last looked. Review just what changed since then.";
+  const what = [
+    pullRequest.newCommits && `${pullRequest.newCommits} new commit${pullRequest.newCommits === 1 ? "" : "s"}`,
+    pullRequest.newComments && `${pullRequest.newComments} new comment${pullRequest.newComments === 1 ? "" : "s"}`,
+  ]
+    .filter(Boolean)
+    .join(" and ");
+  const lead = `PR #${pullRequest.number} has ${what} since you last looked.`;
+  if (pullRequest.mine) return `${lead} Go through the new feedback and tell me which points need changes.`;
+  if (!pullRequest.reviewedByMe) {
+    return `${lead} You haven't reviewed it yet, so review it now with /pr-review ${pullRequest.number}, and skip points others have already raised.`;
+  }
+  return `${lead} Review just what changed since then, and tell me whether your earlier points were addressed.`;
 }
 
 function openPullRequestState(pullRequest: PullRequestSummary): string {
